@@ -22,8 +22,8 @@ if __name__ == "__main__":
     train_odh  = training_odh.isolate_data("reps", [0,1,2])
     # Given that these are stored data from as Thalmic labs myoarmband, lets use a window size of
     # 50 samples and an increment of 10 samples.
-    valid_windows, valid_metadata = valid_odh.parse_windows(50, 10)
-    train_windows, train_metadata = train_odh.parse_windows(50, 10)
+    valid_windows, valid_metadata = valid_odh.parse_windows(200,50)
+    train_windows, train_metadata = train_odh.parse_windows(200,50)
 
 
     # Let's choose to optimize for the Willison's amplitude (WAMP) feature threshold. This parameter
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             # If we use a try block, we don't need to worry about non-invertable matrices
             # The results would just stay 0 as initialized.
             model.fit(model="LDA", feature_dictionary = feature_dictionary)
-            predictions, probabilties = model.run(valid_features, valid_metadata["classes"])
+            predictions, probabilties = model.run(valid_features)
             threshold_results[tp] = om.get_CA(valid_metadata["classes"], predictions) * 100
         finally:
             continue
@@ -88,15 +88,15 @@ if __name__ == "__main__":
             "WAMP_threshold": float(threshold_values[best_threshold])
         }
     # Quick reminder: train_odh refers to the combined "train" and validation set
-    train_windows, train_metadata = training_odh.parse_windows(50,10)
-    test_windows, test_metadata   = test_odh.parse_windows(50,10)
+    train_windows, train_metadata = training_odh.parse_windows(200,50)
+    test_windows, test_metadata   = test_odh.parse_windows(200,50)
     train_features = fe.extract_features(["WAMP"], train_windows, dic)
     test_features  = fe.extract_features(["WAMP"], test_windows, dic)
     feature_dictionary = {"training_features": train_features,
                           "training_labels":   train_metadata["classes"]}
     model = libemg.emg_classifier.EMGClassifier()
     model.fit(model="LDA", feature_dictionary = feature_dictionary)
-    predictions, probabilties = model.run(test_features, test_metadata["classes"])
+    predictions, probabilties = model.run(test_features)
     test_accuracy = om.get_CA(test_metadata["classes"], predictions) * 100 
 
     print("Test accuracy with optimal WAMP threshold: {:.2f}%".format(test_accuracy))
